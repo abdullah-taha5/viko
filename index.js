@@ -1,21 +1,32 @@
-const express = require('express')
-const app = express()
-const path = require('path'); 
-// const cors = require('cors')
-// app.use(cors())
-const server = require('http').createServer(app);
-const io = require('socket.io')(server)
+const express = require('express');
+const app = express();
+const path = require('path');
+const http = require('http');
+const socketIo = require('socket.io');
 const { ExpressPeerServer } = require('peer');
+const { v4: uuidV4 } = require('uuid');
+
+// Create the HTTP server
+const server = http.createServer(app);
+
+// Configure Socket.IO
+const io = socketIo(server, {
+  path: '/socket.io',
+  cors: {
+    origin: "*", // Adjust as necessary for security
+    methods: ["GET", "POST"]
+  }
+});
+
+// Configure PeerServer
 const peerServer = ExpressPeerServer(server, {
   debug: true,
   path: '/myapp',
-  secure: true, // This is your active selection, indicating you want a secure connection
+  secure: true // This ensures that the connection is secure
 });
-const { v4: uuidV4 } = require('uuid')
 
-app.use('/peerjs', peerServer);
-
-app.set('view engine', 'ejs')
+// Set view engine to EJS
+app.set('view engine', 'ejs');
 
 // Set the views directory
 app.set('views', path.join(__dirname, 'views'));
@@ -23,36 +34,39 @@ app.set('views', path.join(__dirname, 'views'));
 // Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Use the PeerServer middleware
+app.use('/peerjs', peerServer);
+
+// Route for generating unique room IDs
 app.get('/', (req, res) => {
-  res.redirect(`/${uuidV4()}`)
-})
+  res.redirect(`/${uuidV4()}`);
+});
 
+// Route for rendering the room view
 app.get('/:room', (req, res) => {
-  res.render('room', { roomId: req.params.room })
-})
+  res.render('room', { roomId: req.params.room });
+});
 
+// Socket.IO connection handler
 io.on('connection', socket => {
-
-  
   socket.on('join-room', (roomId, userId) => {
-    socket.join(roomId)
+    socket.join(roomId);
     socket.to(roomId).broadcast.emit('user-connected', userId);
-    
-    // messages
-    socket.on('message', (message) => {
-      //send message to the same room
-      
-      io.to(roomId).emit('createMessage', message)
-   
-  }); 
 
+    // Handle messages
+    socket.on('message', message => {
+      io.to(roomId).emit('createMessage', message);
+    });
+
+    // Handle disconnection
     socket.on('disconnect', () => {
-      socket.to(roomId).broadcast.emit('user-disconnected', userId)
-    })
-  })
-})
+      socket.to(roomId).broadcast.emit('user-disconnected', userId);
+    });
+  });
+});
 
 // Start the server
-server.listen(3000, () => {
-  console.log('Server listening on port 3000');
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`Server listening on port ${PORT}`);
 });
