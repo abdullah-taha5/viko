@@ -2,8 +2,9 @@ const socket = io('/')
 const videoGrid = document.getElementById('video-grid')
 const myPeer = new Peer(undefined, {
   path: '/peerjs',
-  host: '/',
-  port: 8080
+  host: 'viko-server.vercel.app', // Your Vercel deployment host
+  secure: true, // Use secure connection (wss://)
+// Default HTTPS port
 })
 let myVideoStream;
 const myVideo = document.createElement('video')
