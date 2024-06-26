@@ -3,16 +3,13 @@ const app = express()
 const path = require('path'); 
 // const cors = require('cors')
 // app.use(cors())
-const server = require('http').createServer();
-const io = require('socket.io')(server, {
-  pingInterval: 10000, // How many ms before sending a new ping packet (10000ms = 10s)
-  pingTimeout: 5000, // How many ms without a pong packet to consider the connection closed (5000ms = 5s)
-  maxHttpBufferSize: 1e8, // Maximum allowed message size
-});
+const server = require('http').createServer(app);
+const io = require('socket.io')(server)
 const { ExpressPeerServer } = require('peer');
 const peerServer = ExpressPeerServer(server, {
   debug: true,
-  path: '/peerjs'
+  path: '/myapp',
+  secure: true, // This is your active selection, indicating you want a secure connection
 });
 const { v4: uuidV4 } = require('uuid')
 
@@ -55,6 +52,7 @@ io.on('connection', socket => {
   })
 })
 
+// Start the server
 server.listen(3000, () => {
   console.log('Server listening on port 3000');
 });
