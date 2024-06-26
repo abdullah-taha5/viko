@@ -4,7 +4,7 @@ const myPeer = new Peer(undefined, {
   path: '/peerjs',
   host: 'viko-server.vercel.app', // Your Vercel deployment host
   secure: true, // Use secure connection (wss://)
-  port: 443 // Default HTTPS port
+// Default HTTPS port
 })
 let myVideoStream;
 const myVideo = document.createElement('video')
